@@ -27,6 +27,16 @@ def take_user_input(input_cmd):
     if input_cmd == "cmp 1, 3":
         diff_key_set = fetch_item_properties("1, 3")
         return diff_key_set
+    if input_cmd == "pmin":
+        lowest_price_item = find_lower_price_item()
+        return lowest_price_item
+    if input_cmd == "pmax":
+        highest_price_item = find_highest_price_item()
+        return highest_price_item
+    if "cat" in input_cmd:
+        category_name = input_cmd[3:].strip()
+        item_list_category = find_items_in_category(category_name)
+        return item_list_category
 
 
 def item_list_length():
@@ -38,8 +48,32 @@ def show_item_details():
     return products[2]
 
 
-if __name__ == '__main__':
+def find_lower_price_item():
+    lower_price = products[0]["Price"]
+    lower_product = products[0]
+    for item in products:
+        if lower_price > item["Price"]:
+            lower_price = item["Price"]
+            lower_product = item
+    return lower_product
 
+
+def find_highest_price_item():
+    higher_price = products[0]["Price"]
+    higher_product = products[0]
+    for item in products:
+        if higher_price < item["Price"]:
+            higher_price = item["Price"]
+            higher_product = item
+    return higher_product
+
+
+def find_items_in_category(category):
+    item_list = [x for x in products if x["Category"] == category]
+    return item_list
+
+
+if __name__ == '__main__':
     while True:
         userInput = input("Please enter the command you would like to do: ")
         if userInput == "quit":
