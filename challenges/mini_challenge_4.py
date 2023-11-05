@@ -9,7 +9,6 @@ products = [shirt, laptop, book]
 
 def fetch_item_properties(user_input):
     item_index_list = [int(x) for x in user_input.split(',')]
-    print(item_index_list)
     item_keys_1 = set(products[int(item_index_list[0])-1].keys())
     item_keys_2 = set(products[int(item_index_list[1])-1].keys())
     diff_key_set = item_keys_1.difference(item_keys_2)
