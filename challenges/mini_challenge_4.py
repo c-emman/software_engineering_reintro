@@ -1,6 +1,6 @@
 shirt = {"Name": "Nike", "Category": "Clothing", "Quantity": 15}
 
-laptop = {"Name": "Lenovo", "Category": "Electronics", "Price": 1569.99, "Quantity": 6}
+laptop = {"Category": "Electronics", "Price": 1569.99,}
 
 book = {"Name": "Harry Potter", "Price": 6.50, "Quantity": 9}
 
