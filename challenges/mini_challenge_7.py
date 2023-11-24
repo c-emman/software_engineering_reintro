@@ -9,9 +9,10 @@ products = [shirt, laptop, book]
 
 
 def fetch_item_properties(user_input):
-    item_index_list = [int(x) for x in user_input.split(',')]
-    item_keys_1 = set(products[int(item_index_list[0]) - 1].keys())
-    item_keys_2 = set(products[int(item_index_list[1]) - 1].keys())
+    number_vals = user_input.strip("cmp ")
+    item_pos_1, item_pos_2 = [int(x) for x in number_vals.split(',')]
+    item_keys_1 = set(products[item_pos_1 - 1].keys())
+    item_keys_2 = set(products[item_pos_2 - 1].keys())
     diff_key_set = item_keys_1.difference(item_keys_2)
     diff_key_set.update(item_keys_2.difference(item_keys_1))
     return diff_key_set
@@ -21,17 +22,17 @@ def take_user_input(input_cmd):
     if input_cmd == "len":
         list_length = item_list_length()
         return list_length
-    if input_cmd == "show 2":
-        item_details = show_item_details()
+    if "show" in input_cmd:
+        item_details = show_item_details(input_cmd)
         return item_details
-    if input_cmd == "cmp 1, 3":
-        diff_key_set = fetch_item_properties("1, 3")
+    if "cmp" in input_cmd:
+        diff_key_set = fetch_item_properties(input_cmd)
         return diff_key_set
     if input_cmd == "pmin":
-        lowest_price_item = find_lower_price_item()
+        lowest_price_item = find_lower_price_min()
         return lowest_price_item
     if input_cmd == "pmax":
-        highest_price_item = find_highest_price_item()
+        highest_price_item = find_highest_price_max()
         return highest_price_item
     if "cat" in input_cmd:
         category_name = input_cmd[3:].strip()
@@ -44,28 +45,19 @@ def item_list_length():
     return list_length
 
 
-def show_item_details():
-    return products[2]
+def show_item_details(input_cmd):
+    index = int(input_cmd.strip("show ")) - 1
+    return products[index]
 
 
-def find_lower_price_item():
-    lower_price = products[0]["Price"]
-    lower_product = products[0]
-    for item in products:
-        if lower_price > item["Price"]:
-            lower_price = item["Price"]
-            lower_product = item
-    return lower_product
+def find_lower_price_min():
+    item = min(products, key=lambda product: product["Price"])
+    return item
 
 
-def find_highest_price_item():
-    higher_price = products[0]["Price"]
-    higher_product = products[0]
-    for item in products:
-        if higher_price < item["Price"]:
-            higher_price = item["Price"]
-            higher_product = item
-    return higher_product
+def find_highest_price_max():
+    item = max(products, key=lambda product: product["Price"])
+    return item
 
 
 def find_items_in_category(category):
