@@ -10,9 +10,8 @@ artwork = {"Name": "Jumbotron Art", "Category": "Art", "Price": 5400, "Quantity"
 products = [shirt, laptop, book, artwork]
 
 
-def fetch_item_properties(user_input):
-    number_vals = user_input.strip("cmp ")
-    item_pos_1, item_pos_2 = [int(x) for x in number_vals.split(',')]
+def fetch_item_properties(params):
+    item_pos_1, item_pos_2 = [int(x.replace(',', '')) for x in params]
     item_keys_1 = set(products[item_pos_1 - 1].keys())
     item_keys_2 = set(products[item_pos_2 - 1].keys())
     diff_key_set = item_keys_1.difference(item_keys_2)
@@ -21,43 +20,43 @@ def fetch_item_properties(user_input):
 
 
 def take_user_input(input_cmd):
-    if input_cmd == "len":
-        list_length = item_list_length()
-        return list_length
-    if "show" in input_cmd:
-        item_details = show_item_details(input_cmd)
-        return item_details
-    if "cmp" in input_cmd:
-        diff_key_set = fetch_item_properties(input_cmd)
-        return diff_key_set
-    if input_cmd == "pmin":
-        lowest_price_item = find_lower_price_min()
-        return lowest_price_item
-    if input_cmd == "pmax":
-        highest_price_item = find_highest_price_max()
-        return highest_price_item
-    if "cat" in input_cmd:
-        category_name = input_cmd[3:].strip()
-        item_list_category = find_items_in_category(category_name)
-        return item_list_category
-    if "search" in input_cmd:
-        items = full_text_search(input_cmd)
-        return items
+    cmd, *params = input_cmd.split(' ')
+    match cmd:
+        case "len":
+            list_length = item_list_length()
+            return list_length
+        case "show":
+            item_details = show_item_details(params)
+            return item_details
+        case "cmp":
+            diff_key_set = fetch_item_properties(params)
+            return diff_key_set
+        case "pmin":
+            lowest_price_item = find_lower_price_min()
+            return lowest_price_item
+        case "pmax":
+            highest_price_item = find_highest_price_max()
+            return highest_price_item
+        case "cat":
+            item_list_category = find_items_in_category(params)
+            return item_list_category
+        case "search":
+            items = full_text_search(params)
+            return items
 
 
-def full_text_search(input_cmd):
-    search_term = input_cmd.strip("search ")
+def full_text_search(params):
+    search_term = params[0]
     items = [item for item in products if (search_term in item["Name"]) or (search_term in item["Category"])]
     return items
 
 
 def item_list_length():
-    list_length = len(products)
-    return list_length
+    return len(products)
 
 
-def show_item_details(input_cmd):
-    index = int(input_cmd.strip("show ")) - 1
+def show_item_details(params):
+    index = int(params[0].strip()) - 1
     return products[index]
 
 
@@ -72,7 +71,7 @@ def find_highest_price_max():
 
 
 def find_items_in_category(category):
-    item_list = [x for x in products if x["Category"] == category]
+    item_list = [x for x in products if x["Category"] == category[0]]
     return item_list
 
 
@@ -81,5 +80,4 @@ if __name__ == '__main__':
         userInput = input("Please enter the command you would like to do: ")
         if userInput == "quit":
             break
-        result = take_user_input(userInput)
-        print(result)
+        print(take_user_input(userInput))

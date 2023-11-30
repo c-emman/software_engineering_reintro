@@ -8,9 +8,8 @@ book = {"Name": "Harry Potter", "Category": "Fiction", "Price": 6.50, "Quantity"
 products = [shirt, laptop, book]
 
 
-def fetch_item_properties(user_input):
-    number_vals = user_input.strip("cmp ")
-    item_pos_1, item_pos_2 = [int(x) for x in number_vals.split(',')]
+def fetch_item_properties(params):
+    item_pos_1, item_pos_2 = [int(x.replace(',', '')) for x in params]
     item_keys_1 = set(products[item_pos_1 - 1].keys())
     item_keys_2 = set(products[item_pos_2 - 1].keys())
     diff_key_set = item_keys_1.difference(item_keys_2)
@@ -19,24 +18,25 @@ def fetch_item_properties(user_input):
 
 
 def take_user_input(input_cmd):
-    if input_cmd == "len":
-        list_length = item_list_length()
-        return list_length
-    if "show" in input_cmd:
-        item_details = show_item_details(input_cmd)
-        return item_details
-    if "cmp" in input_cmd:
-        diff_key_set = fetch_item_properties(input_cmd)
-        return diff_key_set
+    cmd, *params = input_cmd.split(' ')
+    match cmd:
+        case "len":
+            list_length = item_list_length()
+            return list_length
+        case "show":
+            item_details = show_item_details(params)
+            return item_details
+        case "cmp":
+            diff_key_set = fetch_item_properties(params)
+            return diff_key_set
 
 
 def item_list_length():
-    list_length = len(products)
-    return list_length
+    return len(products)
 
 
-def show_item_details(input_cmd):
-    index = int(input_cmd.strip("show ")) - 1
+def show_item_details(params):
+    index = int(params[0].strip()) - 1
     return products[index]
 
 
