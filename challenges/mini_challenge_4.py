@@ -11,8 +11,8 @@ def fetch_item_properties(params):
     item_pos_1, item_pos_2 = [int(x.replace(',', '')) for x in params]
     item_keys_1 = set(products[item_pos_1 - 1].keys())
     item_keys_2 = set(products[item_pos_2 - 1].keys())
-    diff_key_set = item_keys_1.difference(item_keys_2)
-    diff_key_set.update(item_keys_2.difference(item_keys_1))
+    diff_key_set = item_keys_1 - item_keys_2
+    diff_key_set.update(item_keys_2 - item_keys_1)
     return diff_key_set
 
 
