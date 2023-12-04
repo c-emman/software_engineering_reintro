@@ -45,9 +45,9 @@ def take_user_input(input_cmd):
             return items
 
 
-def full_text_search(params):
+def full_text_search(params: list[str]):
     search_term = params[0]
-    items = [item for item in products if (search_term in item["Name"]) or (search_term in item["Category"])]
+    items = [item for item in products if (search_term.lower() in item["Name"].lower()) or (search_term.lower() in item["Category"].lower())]
     return items
 
 
@@ -71,7 +71,7 @@ def find_highest_price_max():
 
 
 def find_items_in_category(category):
-    item_list = [x for x in products if x["Category"] == category[0]]
+    item_list = [x for x in products if x["Category"] == category]
     return item_list
 
 
