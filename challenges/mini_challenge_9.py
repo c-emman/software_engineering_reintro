@@ -49,14 +49,14 @@ def take_user_input(input_cmd: str):
 
 def format_item(item):
     adjusted_item = dict(item)
-    percent_increase = 1 + (vat_rates[item["Category"]]/100 if item["Category"] in vat_rates else 0)
+    percent_increase = 1 + vat_rates.get(item["Category"], 0)/100
     adjusted_item["Price"] *= percent_increase
     return adjusted_item
 
 
 def full_text_search(params: list[str]) -> list[dict[str, int | str | float]]:
     search_term = params[0]
-    items = [format_item(item) for item in products if
+    items = [item for item in products if
              (search_term.lower() in item["Name"].lower()) or (search_term.lower() in item["Category"].lower())]
     return items
 
@@ -67,28 +67,33 @@ def item_list_length() -> int:
 
 def show_item_details(params: list[str]) -> dict[str, int | str | float]:
     index = int(params[0].strip()) - 1
-    return format_item(products[index])
+    return products[index]
 
 
 def find_lower_price_min() -> dict[str, int | str | float]:
     item = min(products, key=lambda product: product["Price"])
-    return format_item(item)
+    return item
 
 
 def find_highest_price_max() -> dict[str, int | str | float]:
     item = max(products, key=lambda product: product["Price"])
-    return format_item(item)
+    return item
 
 
 def find_items_in_category(category: list[str]) -> list[dict[str, int | str | float]]:
-    item_list = [format_item(x) for x in products if x["Category"] == category[0]]
+    item_list = [x for x in products if x["Category"].lower() == category[0].lower()]
     return item_list
 
 
 if __name__ == '__main__':
     while True:
-        userInput = input("Please enter the command you would like to do: ")
-        if userInput == "quit":
+        user_input = input("Please enter the command you would like to do: ")
+        if user_input == "quit":
             break
-        result = take_user_input(userInput)
-        print(result)
+        result = take_user_input(user_input)
+        if type(result) is dict:
+            print(format_item(result))
+        elif type(result) is list:
+            print([format_item(item) for item in result])
+        else:
+            print(result)
