@@ -1,18 +1,22 @@
-shirt = {"Name": "Nike", "Category": "Clothing", "Price": 32.50, "Quantity": 15, "Size": "XL", "Colour": "Red"}
+import csv
 
-laptop = {"Name": "Nike", "Category": "Electronics", "Price": 1569.99, "Quantity": 6, "Weight": "150g", "OS": "Windows"}
-
-book = {"Name": "Harry Potter", "Category": "Fiction", "Price": 6.50, "Quantity": 9, "Author": "J.K Rowling",
-        "Cover type": "Hardcover"}
-artwork = {"Name": "Jumbotron Art", "Category": "Art", "Price": 5400, "Quantity": 3, "Author": "K.F Parkins",
-           "Age": "29 years"}
-
-products = [shirt, laptop, book, artwork]
+products = list()
 
 vat_rates = {"Electronics": 20, "Clothing": 14, "Art": 7.9}
 
 
+def load_data(params):
+    with open(f'./{params[0]}', mode='r') as f:
+        csv_file = csv.DictReader(f)
+        for line in csv_file:
+            line["Price"] = float(line["Price"])
+            line["Quantity"] = int(line["Quantity"])
+            products.append(line)
+
+
 def fetch_item_properties(params: list[str]) -> set[str]:
+    if not products:
+        return None
     item_pos_1, item_pos_2 = [int(x.replace(',', '')) for x in params]
     item_keys_1 = set(products[item_pos_1 - 1].keys())
     item_keys_2 = set(products[item_pos_2 - 1].keys())
@@ -45,16 +49,21 @@ def take_user_input(input_cmd: str):
         case "search":
             search_items = full_text_search(params)
             return search_items
+        case "load":
+            load_data(params)
+            print(products)
 
 
 def format_item(item):
     adjusted_item = dict(item)
-    percent_increase = 1 + vat_rates.get(item["Category"], 0)/100
+    percent_increase = 1 + vat_rates.get(item["Category"], 0) / 100
     adjusted_item["Price"] *= percent_increase
     return adjusted_item
 
 
 def full_text_search(params: list[str]) -> list[dict[str, int | str | float]]:
+    if not products:
+        return None
     search_term = params[0]
     items = [item for item in products if
              (search_term.lower() in item["Name"].lower()) or (search_term.lower() in item["Category"].lower())]
@@ -66,21 +75,29 @@ def item_list_length() -> int:
 
 
 def show_item_details(params: list[str]) -> dict[str, int | str | float]:
+    if not products:
+        return None
     index = int(params[0].strip()) - 1
     return products[index]
 
 
 def find_lower_price_min() -> dict[str, int | str | float]:
+    if not products:
+        return None
     item = min(products, key=lambda product: product["Price"])
     return item
 
 
 def find_highest_price_max() -> dict[str, int | str | float]:
+    if not products:
+        return None
     item = max(products, key=lambda product: product["Price"])
     return item
 
 
 def find_items_in_category(category: list[str]) -> list[dict[str, int | str | float]]:
+    if not products:
+        return None
     item_list = [x for x in products if x["Category"].lower() == category[0].lower()]
     return item_list
 
