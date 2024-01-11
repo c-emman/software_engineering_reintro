@@ -7,7 +7,7 @@ vat_rates = {"Electronics": 20, "Clothing": 14, "Art": 7.9}
 
 class ProductProgram(ProductsDB):
 
-    def __init__(self, db_file):
+    def __init__(self, db_file:str):
         super().__init__(db_file=db_file)
         self.params = None
 
@@ -80,7 +80,7 @@ class ProductProgram(ProductsDB):
             case "load":
                 self.load_data()
 
-    def format_item(self, item):
+    def format_item(self, item) -> dict[str, int | str | float]:
         product_keys = ['id', 'Name', 'Category', 'Type', 'Price', 'Quantity', 'Extra_attributes']
         paired_item = zip(product_keys, item)
         adjusted_item = dict(paired_item)
@@ -90,7 +90,7 @@ class ProductProgram(ProductsDB):
         adjusted_item["Price"] *= percent_increase
         return adjusted_item
 
-    def full_text_search(self) -> list[dict[str, int | str | float]]:
+    def full_text_search(self) -> list[tuple[str, int | str | float]]:
         rows = self.sql_query("SELECT * from products")
         if not rows:
             return None
@@ -109,28 +109,28 @@ class ProductProgram(ProductsDB):
         count = self.sql_query("SELECT COUNT(id) from products")
         return int(count[0][0])
 
-    def show_item_details(self) -> dict[str, int | str | float]:
+    def show_item_details(self) -> tuple[str, int | str | float]:
         rows = self.sql_query("SELECT * from products")
         if not rows:
             return None
         item = self.sql_query(f"SELECT * from products WHERE id={int(self.params[0].strip())}")
         return item
 
-    def find_lower_price_min(self) -> tuple:
+    def find_lower_price_min(self) -> list[tuple[str, int | str | float]]:
         rows = self.sql_query("SELECT * from products")
         if not rows:
             return None
         items = self.sql_query("SELECT * from products WHERE Price=(SELECT MIN(Price) from products);")
         return items
 
-    def find_highest_price_max(self) -> tuple:
+    def find_highest_price_max(self) -> list[tuple[str, int | str | float]]:
         rows = self.sql_query("SELECT * from products")
         if not rows:
             return None
         items = self.sql_query("SELECT * from products WHERE Price=(SELECT MAX(Price) from products);")
         return items
 
-    def find_items_in_category(self) -> list[tuple]:
+    def find_items_in_category(self) -> list[tuple[str, int | str | float]]:
         rows = self.sql_query("SELECT * from products")
         if not rows:
             return None
