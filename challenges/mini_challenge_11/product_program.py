@@ -1,9 +1,6 @@
+from products_db import ProductsDB
 import csv
 import json
-
-from products_db import ProductsDB
-
-products = list()
 
 vat_rates = {"Electronics": 20, "Clothing": 14, "Art": 7.9}
 
@@ -14,7 +11,7 @@ class ProductProgram(ProductsDB):
         super().__init__(db_file=db_file)
         self.params = None
 
-    def progam_initialise(self):
+    def program_initialise(self):
         self.create_connection()
         self.create_cursor()
         self.define_schema()
@@ -35,8 +32,10 @@ class ProductProgram(ProductsDB):
                 values = [None, line["Name"], line["Category"], line["Type"], line["Price"], line["Quantity"]]
                 del line["Name"], line["Category"], line["Type"], line["Price"], line["Quantity"]
                 values.append(json.dumps(line))
-                print(values)
                 self.insert_values_to_products_table(values)
+                # self.insert_values_to_search_table(values[1:])
+        print(f"Successfully loaded the following data to sqlite : {values[1:]}")
+        return
 
     def fetch_item_properties(self) -> set[str]:
         rows = self.sql_query("SELECT * from products")
@@ -55,12 +54,13 @@ class ProductProgram(ProductsDB):
         cmd, *self.params = input_cmd.split(' ')
         match cmd:
             case "display":
+                print(self.select_all_vat())
                 return self.select_all()
             case "len":
                 list_length = self.item_list_length()
                 return list_length
             case "show":
-                item_details = self.show_item_details(self.params)
+                item_details = self.show_item_details()
                 return item_details
             case "cmp":
                 diff_key_set = self.fetch_item_properties()
@@ -79,64 +79,80 @@ class ProductProgram(ProductsDB):
                 return search_items
             case "load":
                 self.load_data()
-                # print(products)
 
     def format_item(self, item):
-        adjusted_item = dict(item)
-        rate_query = self.sql_query(f"SELECT rate from vat_rates where Category={item['Category']}")
-        rate_val = rate_query[0][0] if not None else 0
+        product_keys = ['id', 'Name', 'Category', 'Type', 'Price', 'Quantity', 'Extra_attributes']
+        paired_item = zip(product_keys, item)
+        adjusted_item = dict(paired_item)
+        rate_query = self.sql_query(f"SELECT rate from vat_rates where Category='{item[2]}'")
+        rate_val = 0 if len(rate_query) == 0 else rate_query[0][0]
         percent_increase = 1 + rate_val/100
         adjusted_item["Price"] *= percent_increase
         return adjusted_item
 
     def full_text_search(self) -> list[dict[str, int | str | float]]:
-        if not products:
+        rows = self.sql_query("SELECT * from products")
+        if not rows:
             return None
         search_term = self.params[0]
-        items = [item for item in products if
-                 (search_term.lower() in item["Name"].lower()) or (search_term.lower() in item["Category"].lower())]
+        print(search_term)
+        items = self.sql_query(f"""SELECT * from products WHERE 
+                                Name LIKE '%{search_term}%' OR 
+                                Category LIKE '%{search_term}%' OR 
+                                Type LIKE '%{search_term}%'OR 
+                                Price LIKE '%{search_term}%' OR 
+                                Quantity LIKE '%{search_term}%' OR 
+                                Extra_attributes LIKE '%{search_term}%' """)
         return items
 
     def item_list_length(self) -> int:
-        return len(products)
+        count = self.sql_query("SELECT COUNT(id) from products")
+        return int(count[0][0])
 
     def show_item_details(self) -> dict[str, int | str | float]:
-        if not products:
+        rows = self.sql_query("SELECT * from products")
+        if not rows:
             return None
-        index = int(self.params[0].strip()) - 1
-        return products[index]
-
-    def find_lower_price_min(self) -> dict[str, int | str | float]:
-        if not products:
-            return None
-        item = min(products, key=lambda product: product["Price"])
+        item = self.sql_query(f"SELECT * from products WHERE id={int(self.params[0].strip())}")
         return item
 
-    def find_highest_price_max(self) -> dict[str, int | str | float]:
-        if not products:
+    def find_lower_price_min(self) -> tuple:
+        rows = self.sql_query("SELECT * from products")
+        if not rows:
             return None
-        item = max(products, key=lambda product: product["Price"])
-        return item
+        items = self.sql_query("SELECT * from products WHERE Price=(SELECT MIN(Price) from products);")
+        return items
 
-    def find_items_in_category(self) -> list[dict[str, int | str | float]]:
-        if not products:
+    def find_highest_price_max(self) -> tuple:
+        rows = self.sql_query("SELECT * from products")
+        if not rows:
             return None
-        item_list = [x for x in products if x["Category"].lower() == self.params[0].lower()]
-        return item_list
+        items = self.sql_query("SELECT * from products WHERE Price=(SELECT MAX(Price) from products);")
+        return items
+
+    def find_items_in_category(self) -> list[tuple]:
+        rows = self.sql_query("SELECT * from products")
+        if not rows:
+            return None
+        items = self.sql_query(f"SELECT * from products WHERE Category LIKE '{self.params[0]}'")
+        return items
 
 
 if __name__ == '__main__':
 
     products_program = ProductProgram('./db/products.db')
-    products_program.progam_initialise()
+    products_program.program_initialise()
+
     while True:
         user_input = input("Please enter the command you would like to do: ")
         if user_input == "quit":
             break
+
         result = products_program.take_user_input(user_input)
-        # if type(result) is dict:
-        #     print(format_item(result))
-        # elif type(result) is list:
-        #     print([format_item(item) for item in result])
-        # else:
-        print(result)
+
+        if type(result) is list:
+            print([products_program.format_item(item) for item in result])
+        elif result is None:
+            pass
+        else:
+            print(result)

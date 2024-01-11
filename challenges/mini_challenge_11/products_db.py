@@ -41,6 +41,13 @@ class ProductsDB:
                             Category text PRIMARY KEY,
                             rate real );
                             """)
+            # self.cur.execute("""CREATE VIRTUAL TABLE IF NOT EXISTS products_search USING fts5 (
+            #                 Name,
+            #                 Category,
+            #                 Type,
+            #                 Price,
+            #                 Quantity,
+            #                 Extra_attributes );""")
 
         except Error as e:
             print(e)
@@ -48,7 +55,7 @@ class ProductsDB:
 
     def insert_values_to_rates_table(self, values: list):
         try:
-            self.cur.executemany(f"INSERT into vat_rates VALUES (?,?)", values)
+            self.cur.executemany(f"INSERT or IGNORE into vat_rates VALUES (?,?)", values)
             self.conn.commit()
         except Error as e:
             print(e)
@@ -60,6 +67,14 @@ class ProductsDB:
             self.conn.commit()
         except Error as e:
             print(e)
+
+    # def insert_values_to_search_table(self, values: list):
+    #     try:
+    #         self.cur.execute(f"""INSERT into products_search VALUES
+    #         (:Name, :Category, :Type, :Price, :Quantity, :Extra_attributes)""", values)
+    #         self.conn.commit()
+    #     except Error as e:
+    #         print(e)
 
     def sql_query(self, query: str):
         try:
@@ -73,6 +88,15 @@ class ProductsDB:
     def select_all(self):
         try:
             res = self.cur.execute("SELECT * from products")
+            rows = res.fetchall()
+            return rows
+        except Error as e:
+            print(e)
+            return None
+
+    def select_all_vat(self):
+        try:
+            res = self.cur.execute("SELECT * from vat_rates")
             rows = res.fetchall()
             return rows
         except Error as e:
