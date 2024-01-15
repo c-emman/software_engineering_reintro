@@ -54,8 +54,8 @@ class ProductProgram(ProductsDB):
         cmd, *self.params = input_cmd.split(' ')
         match cmd:
             case "display":
-                print(self.select_all_vat())
-                return self.select_all()
+                print(self.sql_query("SELECT * from products"))
+                return self.sql_query("SELECT * from vat_rates")
             case "len":
                 list_length = self.item_list_length()
                 return list_length

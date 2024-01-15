@@ -84,21 +84,3 @@ class ProductsDB:
         except Error as e:
             print(e)
             return None
-
-    def select_all(self):
-        try:
-            res = self.cur.execute("SELECT * from products")
-            rows = res.fetchall()
-            return rows
-        except Error as e:
-            print(e)
-            return None
-
-    def select_all_vat(self):
-        try:
-            res = self.cur.execute("SELECT * from vat_rates")
-            rows = res.fetchall()
-            return rows
-        except Error as e:
-            print(e)
-            return None
