@@ -1,10 +1,6 @@
-from sqlalchemy import create_engine, URL
 import sqlite3
 import psycopg2
 from sqlite3 import Error
-from dotenv import load_dotenv
-import os
-
 
 
 class ProductsDB:
@@ -14,30 +10,22 @@ class ProductsDB:
         self.db_file = db_file
         self.cur = None
         self.db_type = db_type
-        self.engine = None
-        load_dotenv()
-        self.dbname = os.getenv('POSTGRES_DBNAME')
-        self.user = os.getenv('POSTGRES_USER')
-        self.password = os.getenv('POSTGRES_PASSWORD')
-        self.port = os.getenv('POSTGRES_PORT')
 
     def create_connection(self) -> None:
         match self.db_type.lower():
             case 'sqlite':
                 try:
-                    url_obj = URL.create('sqlite', database=self.db_file)
-                    self.engine = create_engine(url_obj)
-                    self.conn
+                    self.conn = sqlite3.connect(self.db_file)
                     print(sqlite3.version)
                 except Error as e:
                     print(e)
                 return
             case 'postgres':
                 try:
-                    self.conn = psycopg2.connect(dbname=self.dbname,
-                                                 user=self.user,
-                                                 password=self.password,
-                                                 port=self.port)
+                    self.conn = psycopg2.connect(dbname='productsdb',
+                                                 user='chrisemmanuel',
+                                                 password='password',
+                                                 port='5432')
                     connected = 'Connected to postgres database' if self.conn.closed == 0 else 'Not connected to postgres'
                     print(connected)
                 except (Exception, psycopg2.DatabaseError) as e:
