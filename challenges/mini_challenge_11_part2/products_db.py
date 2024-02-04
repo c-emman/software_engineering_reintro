@@ -11,6 +11,27 @@ class ProductsDB:
         self.cur = None
         self.db_type = db_type
 
+    def create_connection(self):
+        match self.db_type.lower():
+            case 'sqlite':
+                try:
+                    self.conn = sqlite3.connect(self.db_file)
+                    print(sqlite3.version)
+                except Error as e:
+                    print(e)
+                return
+            case 'postgres':
+                try:
+                    self.conn = psycopg2.connect(dbname='productsdb',
+                                                 user='chrisemmanuel',
+                                                 password='password',
+                                                 port='5432')
+                    connected = 'Connected to postgres database' if self.conn.closed == 0 else 'Not connected to postgres'
+                    print(connected)
+                except (Exception, psycopg2.DatabaseError) as e:
+                    print(e)
+                return
+
     def create_connection(self) -> None:
         match self.db_type.lower():
             case 'sqlite':

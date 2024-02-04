@@ -1,25 +1,25 @@
-from products_db import ProductsDB
+from db_services import DBService
+from models import Products, VATRates
+from sqlalchemy import select, func, or_
 import csv
 import json
 
 vat_rates = {"Electronics": 20, "Clothing": 14, "Art": 7.9}
 
 
-class ProductProgram(ProductsDB):
+class ProductProgram(DBService):
 
-    def __init__(self, db_file: str, db_type: str):
-        super().__init__(db_file=db_file, db_type=db_type)
+    def __init__(self, db_type: str):
+        super().__init__(db_type=db_type)
         self.params = None
 
     def program_initialise(self):
-        self.create_connection()
-        self.create_cursor()
-        self.define_schema()
+        self.initialise_db()
         self.load_vat_data()
 
     def load_vat_data(self):
         vat_rates_list = vat_rates.items()
-        self.insert_values_to_rates_table(vat_rates_list)
+        self.insert_to_vat(vat_rates_list)
         return
 
     def load_data(self):
@@ -29,25 +29,24 @@ class ProductProgram(ProductsDB):
             for line in csv_file:
                 line["Price"] = float(line["Price"])
                 line["Quantity"] = int(line["Quantity"])
-                values = [None, line["Name"], line["Category"], line["Type"], line["Price"], line["Quantity"]] \
-                    if self.db_type == 'sqlite' \
-                    else [line["Name"], line["Category"], line["Type"], line["Price"], line["Quantity"]]
+                values = [line["Name"], line["Category"], line["Type"], line["Price"], line["Quantity"]]
                 del line["Name"], line["Category"], line["Type"], line["Price"], line["Quantity"]
                 values.append(json.dumps(line))
-                self.insert_values_to_products_table(values)
-                # self.insert_values_to_search_table(values[1:])
-        print(f"Successfully loaded the following data to {self.db_type} : {values[1:]}")
+                self.insert_to_products(values)
+        print(f"Successfully loaded the following data to {self.db_type} : {values}")
         return
 
     def fetch_item_properties(self) -> set[str]:
-        rows = self.sql_query("SELECT * from products")
+        rows = self.table_query(select(Products))
         if not rows:
             return None
         item_pos_1, item_pos_2 = [int(x.replace(',', '')) for x in self.params]
-        property_1, property_2 = self.sql_query(f"""SELECT Extra_attributes from products 
-                where id={item_pos_1} OR id={item_pos_2};""")
-        item_set_1 = set(json.loads(property_1[0]).keys())
-        item_set_2 = set(json.loads(property_2[0]).keys())
+
+        property_1, property_2 = self.table_query(
+            select(Products.Extra_attributes).where((Products.id == item_pos_1) | (Products.id == item_pos_2))
+        )
+        item_set_1 = set(json.loads(property_1).keys())
+        item_set_2 = set(json.loads(property_2).keys())
         diff_key_set = item_set_1 - item_set_2
         diff_key_set.update(item_set_2 - item_set_1)
         return diff_key_set
@@ -56,7 +55,8 @@ class ProductProgram(ProductsDB):
         cmd, *self.params = input_cmd.split(' ')
         match cmd:
             case "display":
-                print(self.sql_query("SELECT * from products;"))
+                print([self.row_to_dict(x) for x in self.table_query(select(Products))])
+                print([self.row_to_dict(x) for x in self.table_query(select(VATRates))])
                 return
             case "len":
                 list_length = self.item_list_length()
@@ -83,75 +83,71 @@ class ProductProgram(ProductsDB):
                 self.load_data()
 
     def format_item(self, item) -> dict[str, int | str | float]:
-        product_keys = ['id', 'Name', 'Category', 'Type', 'Price', 'Quantity', 'Extra_attributes']
-        paired_item = zip(product_keys, item)
-        adjusted_item = dict(paired_item)
-        adjusted_item["Price"] = adjusted_item["Price"] if self.db_type == 'sqlite' else \
-            float(adjusted_item["Price"].removeprefix('£').replace(',', ''))
-        rate_query = self.sql_query(f"SELECT rate from vat_rates where Category='{item[2]}';")
-        rate_val = 0 if len(rate_query) == 0 else rate_query[0][0]
+        adjusted_item = dict(item)
+        rate_query = self.table_query(select(VATRates.rate).where(VATRates.Category == item["Category"]))
+        rate_val = 0 if not rate_query else rate_query[0]
         percent_increase = 1 + rate_val / 100
         adjusted_item["Price"] *= percent_increase
         return adjusted_item
 
     def full_text_search(self) -> list[tuple[str, int | str | float]]:
-        rows = self.sql_query("SELECT * from products;")
+        rows = self.table_query(select(Products))
         if not rows:
             return None
 
-        if self.db_type == 'sqlite':
-            search_term = self.params[0]
-            items = self.sql_query(f"""SELECT * from products WHERE 
-                                    Name LIKE '%{search_term}%' OR 
-                                    Category LIKE '%{search_term}%' OR 
-                                    Type LIKE '%{search_term}%'OR 
-                                    Price LIKE '%{search_term}%' OR 
-                                    Quantity LIKE '%{search_term}%' OR 
-                                    Extra_attributes LIKE '%{search_term}%' ;""")
-            return items
+        search_term = f'%{self.params[0]}%'
 
-        elif self.db_type == 'postgres':
-            search_term = f'%{self.params[0]}%'
-            items = self.sql_query_params("""SELECT * FROM products WHERE Name LIKE %s 
-                                                OR Category LIKE %s 
-                                                OR Type LIKE %s 
-                                                OR Price::text LIKE %s 
-                                                OR Quantity::text LIKE %s 
-                                                OR Extra_attributes LIKE %s""", [search_term]*6)
+        items = self.table_query(select(Products).where(or_(
+            Products.Category.ilike(search_term),
+            Products.Name.ilike(search_term),
+            Products.Type.ilike(search_term),
+            Products.Extra_attributes.ilike(search_term),
+            Products.Price.ilike(search_term),
+            Products.Quantity.ilike(search_term)
+        )))
+        items_data = [self.row_to_dict(x) for x in items]
+        return items_data
 
-            return items
+    def row_to_dict(self, row):
+        return {c.name: getattr(row, c.name) for c in row.__table__.columns}
 
     def item_list_length(self) -> int:
-        count = self.sql_query("SELECT COUNT(id) from products;")
-        return int(count[0][0])
+        count = self.table_query(select(func.count()).select_from(Products))
+        return int(count[0])
 
     def show_item_details(self) -> tuple[str, int | str | float]:
-        rows = self.sql_query("SELECT * from products;")
+        rows = self.table_query(select(Products))
         if not rows:
             return None
-        item = self.sql_query(f"SELECT * from products WHERE id={int(self.params[0].strip())};")
-        return item
+        item = self.table_query(select(Products).where(Products.id == int(self.params[0].strip())))
+        item_data = [self.row_to_dict(x) for x in item]
+        return item_data
 
     def find_lower_price_min(self) -> list[tuple[str, int | str | float]]:
-        rows = self.sql_query("SELECT * from products;")
+        rows = self.table_query(select(Products))
         if not rows:
             return None
-        items = self.sql_query("SELECT * from products WHERE Price=(SELECT MIN(Price) from products);")
-        return items
+        min_subquery = select(func.min(Products.Price)).scalar_subquery()
+        item = self.table_query(select(Products).where(Products.Price == min_subquery))
+        item_data = [self.row_to_dict(x) for x in item]
+        return item_data
 
     def find_highest_price_max(self) -> list[tuple[str, int | str | float]]:
-        rows = self.sql_query("SELECT * from products;")
+        rows = self.table_query(select(Products))
         if not rows:
             return None
-        items = self.sql_query("SELECT * from products WHERE Price=(SELECT MAX(Price) from products);")
-        return items
+        max_subquery = select(func.max(Products.Price)).scalar_subquery()
+        item = self.table_query(select(Products).where(Products.Price == max_subquery))
+        item_data = [self.row_to_dict(x) for x in item]
+        return item_data
 
     def find_items_in_category(self) -> list[tuple[str, int | str | float]]:
-        rows = self.sql_query("SELECT * from products;")
+        rows = self.table_query(select(Products))
         if not rows:
             return None
-        items = self.sql_query(f"SELECT * from products WHERE Category LIKE '{self.params[0]}';")
-        return items
+        items = self.table_query(select(Products).where(Products.Category.ilike(self.params[0])))
+        items_data = [self.row_to_dict(x) for x in items]
+        return items_data
 
 
 if __name__ == '__main__':
@@ -162,7 +158,7 @@ if __name__ == '__main__':
         else:
             continue
 
-    products_program = ProductProgram('./db/products.db', user_input_db)
+    products_program = ProductProgram(user_input_db)
     products_program.program_initialise()
 
     while True:
