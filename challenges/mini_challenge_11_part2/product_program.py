@@ -153,7 +153,7 @@ class ProductProgram(DBService):
 if __name__ == '__main__':
     while True:
         user_input_db = input('Which database would you like to use? (sqlite, postgres) :')
-        if user_input_db == 'sqlite' or user_input_db == 'postgres':
+        if user_input_db == 'sqlite' or user_input_db == 'postgresql':
             break
         else:
             continue
