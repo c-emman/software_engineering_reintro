@@ -1,4 +1,4 @@
  # Mini Challenge 11 
  
-This program is split in two, products_db which contains the database logic and the product_program which contains 
-the product program logic. To run simply run the product_program file.
+This program allows you to use the product_program.py to load csv files to a backend of choice, use sqlalchemy 
+model orm to define the schema and use the orm to perform queries using the db_services.py and models.py
