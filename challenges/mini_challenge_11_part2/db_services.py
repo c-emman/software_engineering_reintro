@@ -16,7 +16,7 @@ class DBService:
         db_database = os.getenv(f'{db_type.upper()}_DATABASE')
         url_obj = URL.create(drivername=db_type, username=db_user, password=db_pass, port=db_port, host=db_host,
                              database=db_database) if db_type != 'sqlite' else "sqlite:///db/products.db"
-        self.engine = create_engine(url_obj, echo=True)
+        self.engine = create_engine(url_obj)
         self.session = None
 
     def initialise_db(self):
