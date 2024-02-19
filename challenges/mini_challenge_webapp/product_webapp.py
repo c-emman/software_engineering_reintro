@@ -2,7 +2,6 @@ from fastapi import FastAPI, HTTPException
 from product_program import ProductProgram
 from sqlalchemy import select
 from models import VATRates, Products, ProductsPydantic, VATRatesPydantic
-from typing import List
 
 app = FastAPI()
 
@@ -27,6 +26,7 @@ def read_all_products():
     items_data = [product_app.row_to_dict(x) for x in result]
     return_val = [product_app.format_item(item) for item in items_data]
     return return_val
+
 
 @app.post('/products/', response_model=list[ProductsPydantic])
 def create_product_item(product_item: ProductsPydantic):
