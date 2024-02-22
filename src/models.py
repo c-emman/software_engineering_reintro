@@ -1,7 +1,22 @@
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
 from sqlalchemy import Integer, String, Float
 from pydantic import BaseModel, ConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
+
+
+class Settings(BaseSettings):
+    POSTGRESQL_USERNAME: str
+    POSTGRESQL_PASSWORD: str
+    POSTGRESQL_PORT: int
+    POSTGRESQL_HOST: str
+    POSTGRESQL_DATABASE: str
+
+    SQLITE_DATABASE: str
+    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
+
+
+settings = Settings()
 
 
 class Base(DeclarativeBase):
@@ -42,4 +57,3 @@ class VATRatesPydantic(BaseModel):
 
     category: str
     rate: float
-

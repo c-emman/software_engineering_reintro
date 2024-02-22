@@ -23,17 +23,22 @@ class ProductProgram(DBService):
         return
 
     def load_data(self):
-        self.params = self.params[0]
-        with (open(f'./data/{self.params}', mode='r') as f):
-            csv_file = csv.DictReader(f)
-            for line in csv_file:
-                line["price"] = float(line["price"])
-                line["quantity"] = int(line["quantity"])
-                values = [line["name"], line["category"], line["type"], line["price"], line["quantity"]]
-                del line["name"], line["category"], line["type"], line["price"], line["quantity"]
-                values.append(json.dumps(line))
-                self.insert_to_products(values)
-        print(f"Successfully loaded the following data to {self.db_type} : {values}")
+        try:
+            self.params = self.params[0]
+            with open(f'./data/{self.params}', mode='r') as f:
+                csv_file = csv.DictReader(f)
+                for line in csv_file:
+                    line["price"] = float(line["price"])
+                    line["quantity"] = int(line["quantity"])
+                    values = [line["name"], line["category"], line["type"], line["price"], line["quantity"]]
+                    del line["name"], line["category"], line["type"], line["price"], line["quantity"]
+                    values.append(json.dumps(line))
+                    self.insert_to_products(values)
+            print(f"Successfully loaded the following data to {self.db_type} : {values}")
+        except FileNotFoundError:
+            print(f"File '{self.params}' not found.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
         return
 
     def fetch_item_properties(self) -> set[str]:
@@ -52,8 +57,8 @@ class ProductProgram(DBService):
         return diff_key_set
 
     def take_user_input(self, input_cmd: str):
-        cmd, *self.params = input_cmd.split(' ')
-        match cmd:
+        command, *self.params = input_cmd.split(' ')
+        match command:
             case "display":
                 print([self.row_to_dict(x) for x in self.table_query(select(Products))])
                 print([self.row_to_dict(x) for x in self.table_query(select(VATRates))])

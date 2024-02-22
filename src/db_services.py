@@ -1,21 +1,22 @@
 from sqlalchemy import URL, create_engine
 from sqlalchemy.orm import Session
-from models import Base, Products, VATRates
-from dotenv import load_dotenv
-import os
+from models import Base, Products, VATRates, settings
 
 
 class DBService:
     def __init__(self, db_type: str):
         self.db_type = db_type
-        load_dotenv()
-        db_user = os.getenv(f'{db_type.upper()}_USERNAME')
-        db_pass = os.getenv(f'{db_type.upper()}_PASSWORD')
-        db_port = os.getenv(f'{db_type.upper()}_PORT')
-        db_host = os.getenv(f'{db_type.upper()}_HOST')
-        db_database = os.getenv(f'{db_type.upper()}_DATABASE')
-        url_obj = URL.create(drivername=db_type, username=db_user, password=db_pass, port=db_port, host=db_host,
-                             database=db_database) if db_type != 'sqlite' else "sqlite:///db/products.db"
+        if db_type != 'sqlite':
+            db_user = settings.POSTGRESQL_USERNAME
+            db_pass = settings.POSTGRESQL_PASSWORD
+            db_port = settings.POSTGRESQL_PORT
+            db_host = settings.POSTGRESQL_HOST
+            db_database = settings.POSTGRESQL_DATABASE
+            url_obj = URL.create(drivername=db_type, username=db_user, password=db_pass, port=db_port, host=db_host,
+                                 database=db_database)
+        else:
+            url_obj = settings.SQLITE_DATABASE
+
         self.engine = create_engine(url_obj)
         self.session = None
 
