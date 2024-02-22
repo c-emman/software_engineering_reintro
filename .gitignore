@@ -3,3 +3,4 @@ challenges/mini_challenge_11/.env
 challenges/mini_challenge_11_part2/.env
 challenges/mini_challenge_11_part2/db/
 src/db/
+src/.env
