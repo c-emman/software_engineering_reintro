@@ -9,8 +9,8 @@ vat_rates = {"electronics": 20, "clothing": 14, "art": 7.9}
 
 class ProductProgram(DBService):
 
-    def __init__(self, db_type: str):
-        super().__init__(db_type=db_type)
+    def __init__(self, db_type: str, session=None):
+        super().__init__(db_type=db_type, session=session)
         self.params = None
 
     def program_initialise(self):
@@ -46,7 +46,6 @@ class ProductProgram(DBService):
         if not rows:
             return None
         item_pos_1, item_pos_2 = [int(x) for x in self.params.split(',')]
-
         property_1, property_2 = self.table_query(
             select(Products.extra_attributes).where((Products.id == item_pos_1) | (Products.id == item_pos_2))
         )

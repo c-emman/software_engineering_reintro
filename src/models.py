@@ -6,13 +6,19 @@ from typing import Optional
 
 
 class Settings(BaseSettings):
-    POSTGRESQL_USERNAME: str
-    POSTGRESQL_PASSWORD: str
-    POSTGRESQL_PORT: int
-    POSTGRESQL_HOST: str
-    POSTGRESQL_DATABASE: str
-
-    SQLITE_DATABASE: str
+    # POSTGRESQL_USERNAME: str
+    # POSTGRESQL_PASSWORD: str
+    # POSTGRESQL_PORT: int
+    # POSTGRESQL_HOST: str
+    # POSTGRESQL_DATABASE: str
+    #
+    # SQLITE_DATABASE: str
+    POSTGRESQL_USERNAME: str = "default_user"
+    POSTGRESQL_PASSWORD: str = "default_pass"
+    POSTGRESQL_PORT: int = 5432
+    POSTGRESQL_HOST: str = "localhost"
+    POSTGRESQL_DATABASE: str = "test_db"
+    SQLITE_DATABASE: str = "sqlite:///test.db"
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 
 
