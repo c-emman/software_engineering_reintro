@@ -9,6 +9,7 @@ class DBService:
         if session is not None:
             self.session = session
         else:
+            print('this is running')
             if db_type != 'sqlite':
                 db_user = settings.POSTGRESQL_USERNAME
                 db_pass = settings.POSTGRESQL_PASSWORD
@@ -24,11 +25,12 @@ class DBService:
             self.session = None
 
     def initialise_db(self):
-        try:
-            Base.metadata.create_all(bind=self.engine, checkfirst=True)
-            self.session = Session(bind=self.engine)
-        except Exception as e:
-            print(e)
+        if self.session is None:
+            try:
+                Base.metadata.create_all(bind=self.engine, checkfirst=True)
+                self.session = Session(bind=self.engine)
+            except Exception as e:
+                print(e)
 
     def insert_to_vat(self, vat_values: list[tuple[str, float]]):
         for item in vat_values:

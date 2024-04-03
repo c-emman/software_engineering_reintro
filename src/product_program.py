@@ -11,6 +11,7 @@ class ProductProgram(DBService):
 
     def __init__(self, db_type: str, session=None):
         super().__init__(db_type=db_type, session=session)
+        print('the product program session', session)
         self.params = None
 
     def program_initialise(self):
